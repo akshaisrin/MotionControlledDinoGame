@@ -30,7 +30,7 @@ def print_result(result: GestureRecognizerResult, output_image: mp.Image, timest
     if len(result.gestures)!=0:
         substring=str(result.gestures[0][0]).split(',')[3]
         val=substring[substring.index('=')+1:substring.index(')')]
-
+        print(val)
 options = GestureRecognizerOptions(
     base_options=BaseOptions(model_asset_path=model_path),
     running_mode=VisionRunningMode.LIVE_STREAM,
@@ -64,7 +64,7 @@ with GestureRecognizer.create_from_options(options) as recognizer:
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
 
         recognizer.recognize_async(mp_image, timestamp)
-        print(val)
+        
         #print(result_callback)
 
         for event in pygame.event.get():
