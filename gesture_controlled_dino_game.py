@@ -140,7 +140,6 @@ class Dino:
     def draw(self, screen):
         screen.blit(self.img, (self.dinoRectangle.x, self.dinoRectangle.y))
  
-
 class Cloud:
 
     def __init__(self):
@@ -203,10 +202,6 @@ class Bird(Obstacle):
         self.index+=1
 
 
-
-
-
-
 currentGesture=""
 def main():
     global gameSpeed, xposBg, yposBg, score, obstacles, currentGesture
@@ -221,11 +216,8 @@ def main():
     font=pygame.font.Font('freesansbold.ttf', 20)
     obstacles=[]
 
-
     clock=pygame.time.Clock()
     gameSpeed=14
-
-    
 
     def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
         global currentGesture
@@ -243,7 +235,6 @@ def main():
         textRect=text.get_rect()
         textRect.center=(1000, 40)
         screen.blit(text, textRect)
-
 
     def background():
         global xposBg, yposBg
@@ -289,9 +280,6 @@ def main():
         running=True
         xposBg=00
         yposBg=410
-        
-        
-        
         timestamp = 0
 
         options = GestureRecognizerOptions(
@@ -303,8 +291,6 @@ def main():
             
             
             with GestureRecognizer.create_from_options(options) as recognizer:
-
-            # The recognizer is initialized. Use it here.
 
                 while cap.isOpened():
                     if pygame.key.get_pressed()[pygame.K_g]:
@@ -408,8 +394,7 @@ def main():
 
         while running:
             with GestureRecognizer.create_from_options(options) as recognizer:
-            # The recognizer is initialized. Use it here.
-
+            
                 while cap.isOpened():
 
                     for event in pygame.event.get():
