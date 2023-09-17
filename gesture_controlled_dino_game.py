@@ -9,6 +9,8 @@ from pygame.locals import *
 import sys
 import os
 import random
+from Dinosaur import Dino
+from Cloud import Cloud
 
 pygame.init()
 
@@ -27,8 +29,9 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 model_path="C:\\Users\\aksha\\Documents\\GitHub\\MotionControlledDinoGame\\gesture_recognizer.task"
 
-duck=[pygame.image.load(os.path.join("Assets", "DinoDuck.png"))]
-normal=[pygame.image.load(os.path.join("Assets", "DinoStart.png"))]
+
+# Initializing assets
+
 track=pygame.image.load(os.path.join("Assets", "Track.png"))
 cloud=pygame.image.load(os.path.join("Assets", "Cloud.png"))
 smallCactus=[pygame.image.load(os.path.join("Assets", "SmallCactus1.png")),
@@ -39,124 +42,9 @@ largeCactus=[pygame.image.load(os.path.join("Assets", "LargeCactus1.png")),
              pygame.image.load(os.path.join("Assets", "LargeCactus3.png"))]
 
 bird=[pygame.image.load(os.path.join("Assets", "Bird1.png")), pygame.image.load(os.path.join("Assets", "Bird2.png"))]
+currentGesture=""
 
-
-class Dino:
-    
-    xPos=80
-    yPos=310
-    yPosDuck=340
-    jump_Vel=8.5
-
-    xPosTest=500
-    yPosTest=360
-    yPosDuckTest=390
-
-    def __init__(self, test=False):
-
-        self.duck_image=duck
-        self.normal_image=normal
-
-        self.dinoDuck=False
-        self.dinoJump=False
-        self.dinoNormal=True
-
-        self.img=self.normal_image[0]
-        self.dinoRectangle=self.img.get_rect()
-
-        self.dinoRectangle.x=self.xPos
-        self.dinoRectangle.y=self.yPos
-        
-        if test:
-            self.dinoRectangle.x=self.xPosTest
-            self.dinoRectangle.y=self.yPosTest
-
-        self.jumpVel=self.jump_Vel
-    
-
-    def update(self, currentGesture, test=False):
-
-        if self.dinoDuck:
-            self.duck(test)
-        
-        if self.dinoJump:
-            self.jump(test)
-        
-        if self.dinoNormal:
-            self.normal(test)
-        
-        if currentGesture=="'Thumb_Up'" and not self.dinoJump:
-            self.dinoJump=True
-            self.dinoDuck=False
-            self.dinoNormal=False
-            currentGesture=""
-        
-        elif currentGesture=="'Thumb_Down'" and not self.dinoDuck:
-            self.dinoJump=False
-            self.dinoDuck=True
-            self.dinoNormal=False
-            currentGesture=""
-        
-        elif not (self.dinoJump or currentGesture=="'Thumb_Down'"):
-            self.dinoDuck=False
-            self.dinoJump=False
-            self.dinoNormal=True
-        
-    
-
-    def normal(self, test=False):
-        self.img=self.normal_image[0]
-        self.dinoRectangle=self.img.get_rect()
-        if test:
-            self.dinoRectangle.x=self.xPosTest
-            self.dinoRectangle.y=self.yPosTest
-        else:    
-            self.dinoRectangle.x=self.xPos
-            self.dinoRectangle.y=self.yPos
-
-    def jump(self, test=False):
-        self.img=self.normal_image[0]
-        if self.dinoJump:
-            self.dinoRectangle.y-=self.jumpVel*4
-            self.jumpVel-=0.8
-        
-        if self.jumpVel<-self.jump_Vel:
-            self.dinoJump=False
-            self.jumpVel=self.jump_Vel
-
-    def duck(self, test=False):
-        self.img=self.duck_image[0]
-        self.dinoRectangle=self.img.get_rect()
-
-        if test:
-            self.dinoRectangle.x=self.xPosTest
-            self.dinoRectangle.y=self.yPosTest
-            self.dinoRectangle.y=self.yPosDuckTest
-        else:    
-            self.dinoRectangle.x=self.xPos
-            self.dinoRectangle.y=self.yPos
-            self.dinoRectangle.y=self.yPosDuck
-    
-    def draw(self, screen):
-        screen.blit(self.img, (self.dinoRectangle.x, self.dinoRectangle.y))
- 
-class Cloud:
-
-    def __init__(self):
-        self.x=screenWidth+random.randint(800, 1000)
-        self.y=random.randint(50, 100)
-        self.img=cloud
-        self.width=self.img.get_width()
-    
-    def update(self):
-        self.x-=gameSpeed
-
-        if self.x<self.width:
-            self.x=screenWidth+random.randint(2000, 2500)
-            self.y=random.randint(50, 100)
-
-    def draw(self, screen):
-        screen.blit(self.img, (self.x, self.y))
+# Initializing Obstacle superclass and bird and cactus objects that inherit from obstacle class
 
 class Obstacle:
 
@@ -168,25 +56,12 @@ class Obstacle:
 
     def update(self):
         self.rect.x-=gameSpeed
+        
         if self.rect.x < self.rect.width:
             obstacles.pop()
-
+        
     def draw(self, screen):
         screen.blit(self.img[self.type], self.rect)
-
-class SmallCactus(Obstacle):
-    
-    def __init__(self, img):
-        self.type=random.randint(0, 2)
-        super().__init__(img, self.type)
-        self.rect.y=325
-
-class LargeCactus(Obstacle):
-    
-    def __init__(self, img):
-        self.type=random.randint(0, 2)
-        super().__init__(img, self.type)
-        self.rect.y=300
 
 class Bird(Obstacle):
     def __init__(self, img):
@@ -201,9 +76,20 @@ class Bird(Obstacle):
         screen.blit(self.img[self.index//5], self.rect)
         self.index+=1
 
+class Cactus(Obstacle):
 
-currentGesture=""
-def main():
+    def __init__(self, cactus_type):
+        self.cactus_type=cactus_type
+        self.type=random.randint(0, 2)
+        
+        if self.cactus_type=='small':
+            super().__init__(smallCactus, self.type)
+            self.rect.y=325
+        else:
+            super().__init__(largeCactus, self.type)
+            self.rect.y=300
+
+def main() -> None:
     global gameSpeed, xposBg, yposBg, score, obstacles, currentGesture
     
     player=Dino()
@@ -219,13 +105,18 @@ def main():
     clock=pygame.time.Clock()
     gameSpeed=14
 
-    def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
+    def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int) -> None:
         global currentGesture
+
+        # Parsing through the text returned by model to obtain just the gesture
+
         if len(result.gestures)!=0:
             substring=str(result.gestures[0][0]).split(',')[3]
             currentGesture=substring[substring.index('=')+1:substring.index(')')]
 
-    def scoreSystem():
+    # Method to get the current score of the user and display it on screen
+
+    def scoreSystem() -> None:
         global score, gameSpeed
         score+=1
         if score%100==0:
@@ -236,7 +127,9 @@ def main():
         textRect.center=(1000, 40)
         screen.blit(text, textRect)
 
-    def background():
+    # Moves the track the dino is running on to feel like the dino is "running" even though it is standing still
+
+    def background() -> None:
         global xposBg, yposBg
 
         imgWidth=track.get_width()
@@ -249,7 +142,9 @@ def main():
 
         xposBg-=gameSpeed
 
-    def welcomeScreen():
+    # Title screen method
+
+    def welcomeScreen() -> None:
         global running
         running = True
         while running:
@@ -257,7 +152,7 @@ def main():
             title=pygame.font.Font('freesansbold.ttf', 50)
             smaller=pygame.font.Font('freesansbold.ttf', 40)
 
-            text = title.render("Welcome to the Gesture-Powered Dino Game!", False, (0, 0, 0))
+            text = title.render("Welcome to the Gesture-Controlled Dino Game!", False, (0, 0, 0))
             textRect=text.get_rect()
             textRect.center = (screenWidth // 2, screenHeight // 2 -150)
 
@@ -276,7 +171,9 @@ def main():
                 if event.type == pygame.QUIT:
                     running = False
 
-    def align():
+    # Method for the second screen, allowing users to position their hands to be detected by the model
+
+    def align() -> None:
         running=True
         xposBg=00
         yposBg=410
@@ -288,7 +185,6 @@ def main():
         result_callback=print_result)
 
         while running:
-            
             
             with GestureRecognizer.create_from_options(options) as recognizer:
 
@@ -314,8 +210,7 @@ def main():
                     text3 = smaller.render("Try it out for yourself, then hit 'g' to start the game!", False, (0, 0, 0))
                     text3Rect=text3.get_rect()
                     text3Rect.center = (screenWidth // 2 +70, screenHeight // 2 -250)
-
-                    
+ 
                     screen.blit(text, textRect)
                     screen.blit(text2, text2Rect)
                     screen.blit(text3, text3Rect)
@@ -340,48 +235,93 @@ def main():
 
                     recognizer.recognize_async(mp_image, timestamp)
 
-                 
                     testPlayer.draw(screen)
                     testPlayer.update(currentGesture, True)
                     screen.blit(track, (xposBg, yposBg))
 
                     pygame.display.update()
-    def gameOver():
-        running = True
-        while running:
-            screen.fill((255, 255, 255))
-            gameOverFont=pygame.font.Font('freesansbold.ttf', 45)
-            font = pygame.font.Font('freesansbold.ttf', 30)
 
-            
-            text = gameOverFont.render("Game Over!", False, (0, 0, 0))
-            textRect=text.get_rect()
-            textRect.center = (screenWidth // 2, screenHeight // 2 -50)
+    # Game over method to display high score status and ask user if they want to play again or quit
 
-            scoreTot = font.render("Your Score: " + str(score), True, (0, 0, 0))
-            scoreRect = scoreTot.get_rect()
-            scoreRect.center = (screenWidth // 2, screenHeight // 2 +50)
+    def gameOver() -> None:
+        
+        screen.fill((255, 255, 255))
 
-            playAgain = font.render("Hit 'r' to play again or 'q' to quit!", True, (0, 0, 0))
-            playAgainRect = playAgain.get_rect()
-            playAgainRect.center = (screenWidth // 2, screenHeight // 2 + 150)
+        gameOverFont=pygame.font.Font('freesansbold.ttf', 45)
+        font = pygame.font.Font('freesansbold.ttf', 30)
+        beat_high_score, high_score=getHighScore(score)
 
+        if beat_high_score:
+            beat_score_message=font.render("You Have a New High Score!", True, (0, 0, 0))
+        else:
+            beat_score_message=font.render(f"You Didn't Beat the Current High Score of {str(high_score)}", True, (0, 0, 0))
+        beat_score_rect=beat_score_message.get_rect()
+        beat_score_rect.center=(screenWidth //2, screenHeight //2 + 50)
+        
+        
+        text = gameOverFont.render("Game Over!", False, (0, 0, 0))
+        textRect=text.get_rect()
+        textRect.center = (screenWidth // 2, screenHeight // 2 -150)
+        
+        scoreTot = font.render("Your Score: " + str(score), True, (0, 0, 0))
+        scoreRect = scoreTot.get_rect()
+        scoreRect.center = (screenWidth // 2, screenHeight // 2 +100)
 
-            screen.blit(text, textRect)
-            screen.blit(scoreTot, scoreRect)
-            screen.blit(playAgain, playAgainRect)
-            
-            pygame.display.update()
+        playAgain = font.render("Hit 'r' to play again or 'q' to quit!", True, (0, 0, 0))
+        playAgainRect = playAgain.get_rect()
+        playAgainRect.center = (screenWidth // 2, screenHeight // 2 + 200)
+
+        screen.blit(text, textRect)
+        screen.blit(beat_score_message,beat_score_rect)
+        screen.blit(scoreTot, scoreRect)
+        screen.blit(playAgain, playAgainRect)
+
+        pygame.display.update()
+        
+        leave_screen=False
+
+        while not leave_screen:
 
             if pygame.key.get_pressed()[pygame.K_r]:
-                main()   
+                main()
+                leave_screen=True
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT or pygame.key.get_pressed()[pygame.K_q]:
-                    running = False
                     pygame.quit()
+                    leave_screen=True
                     sys.exit()
 
-    def startGame():
+    # Method to read current high score from txt file and copare to current score                
+
+    def getHighScore(score) -> (bool, int):
+
+        if (os.path.exists("highscore.txt") == False):
+            f = open("highscore.txt", "w")
+            f.write(str(score))
+            f.close()
+            current_high_score=score
+
+            return True, current_high_score
+        
+        else:
+            f=open("highscore.txt", "r")
+            current_high_score=f.read()
+            
+            f.close()
+
+            if (score>int(current_high_score)):
+                f2=open("highscore.txt", "w")
+                f2.write(str(score))
+                f2.close()
+
+                return True, current_high_score
+            
+        return False, current_high_score
+
+    # Main method responsible for playing the game            
+    
+    def startGame() -> None:
         global running         
         timestamp = 0
 
@@ -389,8 +329,6 @@ def main():
         base_options=BaseOptions(model_asset_path=model_path),
         running_mode=VisionRunningMode.LIVE_STREAM,
         result_callback=print_result)
-
-        print(cap.isOpened())
 
         while running:
             with GestureRecognizer.create_from_options(options) as recognizer:
@@ -412,6 +350,7 @@ def main():
                     frame2=pygame.transform.scale(frame2, (200, 200))
                     screen.blit(frame2, (0,0))
                     
+                    # Error handling
 
                     if not ret:
                         print("Ignoring empty frame")
@@ -428,9 +367,9 @@ def main():
 
                     if len(obstacles)==0:
                         if random.randint(0, 2)==0:
-                            obstacles.append(SmallCactus(smallCactus))
+                            obstacles.append(Cactus("small"))
                         elif random.randint(0, 2)==1:
-                            obstacles.append(LargeCactus(largeCactus))
+                            obstacles.append(Cactus("large"))
                         elif random.randint(0, 2)==2:
                             obstacles.append(Bird(bird))
 
